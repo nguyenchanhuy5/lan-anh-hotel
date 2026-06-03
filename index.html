@@ -1,258 +1,192 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>LAN ANH HOTEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{
-    --gold:#c9a227;--gold-deep:#a8861a;--gold-soft:#e7d28a;
-    --cream:#fdfaf3;--cream-2:#f6efe0;
-    --ink:#2a2419;--ink-soft:#6b6453;
-    --line:#e8ddc2;--white:#fff;
-    --shadow:0 18px 50px -20px rgba(120,95,20,.28);
-  }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html{scroll-behavior:smooth;}
-  body{
-    font-family:'Be Vietnam Pro',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden;
-    background-image:radial-gradient(circle at 12% 8%,rgba(201,162,39,.06),transparent 45%),radial-gradient(circle at 88% 92%,rgba(201,162,39,.05),transparent 45%);
-  }
-  .serif,.brand .name,.crest,.sec-head h2,.card .title,.svc .title,.room-name,
-  .modal-room-code-input,.modal-price-input,footer h3,.room-type-title,.admin-header h2
-    {font-family:'Cormorant Garamond',serif;}
-
-  /* ===== HEADER ===== */
-  header{
-    position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
-    padding:14px 40px;background:rgba(253,250,243,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
-  }
-  .brand{display:flex;align-items:center;gap:14px;}
-  .crest{
-    width:46px;height:46px;border-radius:50%;
-    background:linear-gradient(135deg,var(--gold),var(--gold-deep));
-    display:grid;place-items:center;color:var(--white);font-weight:700;font-size:24px;
-    box-shadow:0 6px 16px -6px rgba(168,134,26,.6);
-  }
-  .brand .name{font-weight:700;font-size:26px;letter-spacing:.5px;line-height:1;}
-  .brand .sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-deep);margin-top:2px;}
-  nav{display:flex;gap:8px;align-items:center;}
-  nav a{text-decoration:none;color:var(--ink-soft);font-size:14px;font-weight:500;padding:8px 16px;border-radius:30px;transition:.25s;}
-  nav a:hover,nav a.active{color:var(--ink);background:var(--cream-2);}
-  .hotline{
-    display:flex;align-items:center;gap:8px;
-    background:linear-gradient(135deg,var(--gold),var(--gold-deep));
-    color:var(--white);padding:9px 20px;border-radius:30px;font-weight:600;font-size:14px;
-    box-shadow:0 8px 18px -8px rgba(168,134,26,.7);
-  }
-
-  /* ===== HERO ===== */
-  .hero{position:relative;margin:24px 40px 0;border-radius:28px;overflow:hidden;height:360px;display:flex;align-items:center;box-shadow:var(--shadow);}
-  .hero-img{position:absolute;inset:0;background:var(--cream-2);cursor:pointer;transition:.3s;}
-  .hero-img:hover{opacity:.85;}
-  .hero-img img{width:100%;height:100%;object-fit:cover;}
-  .hero-img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,16,8,.72),rgba(20,16,8,.3) 60%,transparent);pointer-events:none;}
-  .hero-img-overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.3);opacity:0;transition:.3s;z-index:10;pointer-events:none;}
-  .hero-img:hover .hero-img-overlay{opacity:1;pointer-events:auto;}
-  .hero-img-overlay button{background:var(--gold);color:var(--white);border:none;padding:12px 24px;border-radius:50px;font-weight:600;cursor:pointer;font-size:14px;transition:.3s;box-shadow:0 8px 16px rgba(0,0,0,.3);}
-  .hero-img-overlay button:hover{background:var(--gold-deep);transform:scale(1.05);}
-  .hero-content{position:relative;z-index:2;padding:0 60px;max-width:640px;color:var(--white);}
-  .hero .tagline{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-soft);margin-bottom:14px;display:flex;align-items:center;gap:12px;}
-  .hero .tagline::before{content:"";width:38px;height:1px;background:var(--gold-soft);}
-  .hero h1{font-weight:600;font-size:54px;line-height:1.05;margin-bottom:18px;}
-  .hero h1 em{color:var(--gold-soft);font-style:italic;}
-  .hero p{font-size:15px;line-height:1.6;color:rgba(255,255,255,.85);max-width:440px;font-weight:300;}
-
-  /* placeholder */
-  .ph{width:100%;height:100%;background:repeating-linear-gradient(45deg,var(--cream-2),var(--cream-2) 14px,#f0e6cf 14px,#f0e6cf 28px);display:grid;place-items:center;text-align:center;color:var(--gold-deep);}
-  .ph span{font-size:11px;letter-spacing:2px;text-transform:uppercase;background:rgba(253,250,243,.9);padding:6px 12px;border-radius:8px;font-weight:600;}
-  .ph-large{background:repeating-linear-gradient(45deg,var(--cream-2),var(--cream-2) 20px,#f0e6cf 20px,#f0e6cf 40px);display:grid;place-items:center;width:100%;height:100%;color:var(--gold-deep);}
-  .ph-large span{font-size:14px;font-weight:600;background:rgba(253,250,243,.95);padding:10px 18px;border-radius:12px;letter-spacing:1px;}
-
-  /* ===== QUICK STRIP ===== */
-  .strip{
-    margin:-40px 70px 0;position:relative;z-index:10;
-    background:var(--white);border-radius:20px;border:1px solid var(--line);
-    box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(4,1fr);
-  }
-  .strip .item{display:flex;align-items:center;gap:14px;padding:20px 24px;border-right:1px solid var(--line);}
-  .strip .item:last-child{border-right:none;}
-  .strip .ic{width:44px;height:44px;border-radius:12px;flex:none;background:var(--cream-2);display:grid;place-items:center;font-size:20px;color:var(--gold-deep);}
-  .strip .tt{font-weight:600;font-size:14px;}
-  .strip .ds{font-size:12px;color:var(--ink-soft);}
-
-  /* ===== SECTION ===== */
-  section{padding:0 40px;margin-top:54px;}
-  .sec-head{text-align:center;margin-bottom:34px;}
-  .sec-head .kicker{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:8px;}
-  .sec-head h2{font-weight:600;font-size:42px;}
-  .sec-head .deco{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto 0;}
-
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
-
-  .card{
-    background:var(--white);border-radius:20px;overflow:hidden;border:1px solid var(--line);
-    box-shadow:0 10px 30px -18px rgba(120,95,20,.25);
-    transition:transform .35s,box-shadow .35s;cursor:pointer;display:flex;flex-direction:column;
-  }
-  .card:active,.card:hover{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(120,95,20,.4);}
-  .card .media{height:200px;position:relative;overflow:hidden;}
-  .card .media img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
-  .card:hover .media img{transform:scale(1.06);}
-  .badge{
-    position:absolute;top:14px;left:14px;z-index:2;background:rgba(253,250,243,.95);color:var(--gold-deep);
-    padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;backdrop-filter:blur(6px);
-  }
-  .card .body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1;}
-  .card .title{font-weight:600;font-size:24px;line-height:1.1;}
-  .card .meta{font-size:13px;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:8px;}
-  .card .feats{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0;}
-  .card .feats span{font-size:11px;background:var(--cream-2);color:var(--ink-soft);padding:4px 10px;border-radius:20px;}
-  .card .foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;padding-top:14px;border-top:1px dashed var(--line);}
-  .card .cta{font-size:13px;color:var(--gold-deep);font-weight:600;}
-  .stars{color:var(--gold);font-size:14px;letter-spacing:1px;}
-
-  /* room details */
-  .room-details{display:none;margin-top:26px;animation:slideDown .4s ease;}
-  .room-details.active{display:block;}
-  @keyframes slideDown{from{opacity:0;max-height:0;overflow:hidden;}to{opacity:1;max-height:1500px;}}
-  .room-details h3{margin-bottom:20px;text-align:center;color:var(--ink);}
-  .rooms-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
-  .room-item{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 6px 20px -12px rgba(120,95,20,.15);transition:.3s;cursor:pointer;display:flex;flex-direction:column;}
-  .room-item:hover{transform:translateY(-6px);box-shadow:0 16px 40px -12px rgba(120,95,20,.3);}
-  .room-item-image{width:100%;height:180px;background:var(--cream-2);position:relative;overflow:hidden;display:grid;place-items:center;}
-  .room-item-image img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
-  .room-item:hover .room-item-image img{transform:scale(1.08);}
-  .room-img-upload{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);z-index:10;}
-  .room-item:hover .room-img-upload{display:grid;}
-  .room-img-upload button{background:var(--gold);color:var(--white);border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;transition:.3s;}
-  .room-img-upload button:hover{background:var(--gold-deep);}
-  .room-item-info{padding:16px;}
-  .room-name{font-weight:600;font-size:20px;color:var(--ink);}
-
-  /* service cards */
-  .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
-  .svc{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s;}
-  .svc:hover{transform:translateY(-4px);box-shadow:0 20px 40px -22px rgba(120,95,20,.4);}
-  .svc .media{width:120px;flex:none;position:relative;}
-  .svc .media img{width:100%;height:100%;object-fit:cover;}
-  .svc .body{padding:16px 18px;display:flex;flex-direction:column;justify-content:center;}
-  .svc .title{font-weight:600;font-size:20px;line-height:1.1;}
-  .svc .pr{margin-top:8px;font-weight:600;font-size:15px;color:var(--gold-deep);}
-
-  /* utility cards */
-  .util{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s;}
-  .util:hover{transform:translateY(-4px);box-shadow:0 20px 40px -22px rgba(120,95,20,.4);}
-  .util .ic{font-size:30px;}
-  .util .title{font-weight:600;font-size:20px;margin-top:8px;line-height:1.1;}
-  .util .desc{color:var(--ink-soft);font-size:13px;margin-top:6px;}
-
-  footer{margin-top:64px;padding:40px;text-align:center;background:linear-gradient(180deg,transparent,var(--cream-2));border-top:1px solid var(--line);}
-  footer .crest{margin:0 auto 14px;}
-  footer h3{font-size:30px;font-weight:600;}
-  footer p{color:var(--ink-soft);font-size:14px;margin-top:8px;}
-  footer .info{display:flex;justify-content:center;gap:30px;margin-top:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);}
-  footer .info b{color:var(--ink);}
-
-  /* ===== modals (shared) ===== */
-  .overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);}
-  .overlay.active{display:flex;}
-
-  /* room detail modal */
-  .modal-content{position:relative;background:var(--white);border-radius:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);}
-  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:28px;cursor:pointer;color:var(--ink);z-index:11;width:40px;height:40px;display:grid;place-items:center;transition:.3s;}
-  .modal-close:hover{transform:scale(1.2);}
-  .modal-image-section{position:relative;}
-  .modal-image-container{width:100%;height:280px;background:var(--cream-2);position:relative;overflow:hidden;display:grid;place-items:center;border-radius:24px 24px 0 0;}
-  .modal-image-container img{width:100%;height:100%;object-fit:cover;}
-  .modal-upload-btn{position:absolute;bottom:12px;right:12px;background:var(--gold);color:var(--white);border:none;padding:10px 18px;border-radius:10px;font-weight:600;cursor:pointer;font-size:13px;transition:.3s;}
-  .modal-upload-btn:hover{background:var(--gold-deep);transform:translateY(-2px);}
-  .modal-info-section{padding:28px;}
-  .modal-room-code-input,.modal-price-input{font-weight:700;border:none;border-bottom:2px solid var(--line);width:100%;padding:6px 0;background:transparent;transition:.3s;margin-bottom:16px;}
-  .modal-room-code-input{font-size:32px;color:var(--ink);}
-  .modal-price-input{font-size:24px;color:var(--gold-deep);}
-  .modal-room-code-input:focus,.modal-price-input:focus{outline:none;border-bottom-color:var(--gold);}
-  .modal-seller{font-size:14px;color:var(--ink-soft);margin-bottom:12px;}
-  .modal-seller strong{color:var(--ink);}
-  .modal-divider{height:1px;background:var(--line);margin:16px 0;}
-  .modal-desc-title{font-weight:600;color:var(--gold-deep);font-size:12px;text-transform:uppercase;margin-bottom:10px;letter-spacing:1px;}
-  .modal-desc-textarea{width:100%;min-height:240px;padding:12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;transition:.3s;}
-  .modal-desc-textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1);}
-  .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;padding:12px 24px;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;width:100%;transition:.3s;}
-  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(168,134,26,.3);}
-  .modal-save-btn{margin-top:16px;}
-
-  /* admin panel */
-  .admin-toggle{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(168,134,26,.4);z-index:100;transition:.3s;}
-  .admin-toggle:hover{transform:scale(1.1);}
-  .admin-panel{background:var(--white);border-radius:20px;width:90%;max-width:900px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
-  .admin-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--gold-soft),var(--cream-2));}
-  .admin-header h2{font-size:28px;font-weight:600;color:var(--ink);}
-  .admin-header-actions{display:flex;gap:8px;align-items:center;}
-  .logout-btn{background:none;border:1px solid var(--line);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink-soft);font-family:inherit;transition:.25s;}
-  .logout-btn:hover{background:var(--cream-2);color:var(--ink);}
-  .admin-close{background:none;border:none;font-size:24px;color:var(--ink);cursor:pointer;width:40px;height:40px;display:grid;place-items:center;}
-  .admin-content{padding:24px;}
-  .room-type-section{margin-bottom:32px;border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--cream);}
-  .room-type-title{font-size:22px;font-weight:600;color:var(--ink);margin-bottom:16px;}
-  .room-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
-  .edit-room-card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px;}
-  .edit-room-name{font-weight:600;font-size:16px;color:var(--ink);margin-bottom:12px;}
-  .edit-field{margin-bottom:12px;}
-  .edit-field label{display:block;font-size:12px;font-weight:600;color:var(--gold-deep);text-transform:uppercase;margin-bottom:4px;}
-  .edit-field input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;}
-  .edit-field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1);}
-  .image-upload{padding:12px;border:2px dashed var(--gold-soft);border-radius:8px;text-align:center;cursor:pointer;transition:.3s;}
-  .image-upload:hover{background:var(--cream-2);}
-  .image-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;}
-  .save-btn{padding:10px 20px;border-radius:8px;margin-top:12px;}
-
-  /* ===== LOGIN MODAL ===== */
-  .login-box{background:var(--white);border-radius:20px;padding:36px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.4);}
-  .login-box h2{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;text-align:center;margin-bottom:6px;color:var(--ink);}
-  .login-box .login-sub{text-align:center;font-size:13px;color:var(--ink-soft);margin-bottom:24px;}
-  .login-field{margin-bottom:14px;}
-  .login-field input{width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;transition:.3s;background:var(--cream);}
-  .login-field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1);background:var(--white);}
-  .login-error{color:#e74c3c;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px;}
-
-  /* ===== AUTH GATING ===== */
-  body:not(.is-admin) .hero-img-overlay,
-  body:not(.is-admin) .room-img-upload,
-  body:not(.is-admin) .modal-upload-btn{display:none!important;}
-
-  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s;}
-  .reveal.in{opacity:1;transform:none;}
-
-  @media(max-width:1024px){.hero h1{font-size:44px;}}
+:root{--gold:#c9a227;--gold-deep:#a8861a;--gold-soft:#e7d28a;--cream:#fdfaf3;--cream-2:#f6efe0;--ink:#2a2419;--ink-soft:#6b6453;--line:#e8ddc2;--white:#fff;--shadow:0 18px 50px -20px rgba(120,95,20,.28)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden;background-image:radial-gradient(circle at 12% 8%,rgba(201,162,39,.06),transparent 45%),radial-gradient(circle at 88% 92%,rgba(201,162,39,.05),transparent 45%)}
+.serif,.brand .name,.crest,.sec-head h2,.card .title,.svc .title,.room-name,.modal-room-code-input,.modal-price-input,footer h3,.room-type-title,.admin-header h2{font-family:'Cormorant Garamond',serif}
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 40px;background:rgba(253,250,243,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:14px}
+.crest{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));display:grid;place-items:center;color:var(--white);font-weight:700;font-size:24px;box-shadow:0 6px 16px -6px rgba(168,134,26,.6)}
+.brand .name{font-weight:700;font-size:26px;letter-spacing:.5px;line-height:1}
+.brand .sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold-deep);margin-top:2px}
+nav{display:flex;gap:8px;align-items:center}
+nav a{text-decoration:none;color:var(--ink-soft);font-size:14px;font-weight:500;padding:8px 16px;border-radius:30px;transition:.25s}
+nav a:hover,nav a.active{color:var(--ink);background:var(--cream-2)}
+.hotline{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);padding:9px 20px;border-radius:30px;font-weight:600;font-size:14px;box-shadow:0 8px 18px -8px rgba(168,134,26,.7)}
+.hero{position:relative;margin:24px 40px 0;border-radius:28px;overflow:hidden;height:360px;display:flex;align-items:center;box-shadow:var(--shadow)}
+.hero-img{position:absolute;inset:0;background:var(--cream-2);cursor:pointer;transition:.3s}
+.hero-img:hover{opacity:.85}
+.hero-img img{width:100%;height:100%;object-fit:cover}
+.hero-img::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,16,8,.72),rgba(20,16,8,.3) 60%,transparent);pointer-events:none}
+.hero-img-overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.3);opacity:0;transition:.3s;z-index:10;pointer-events:none}
+.hero-img:hover .hero-img-overlay{opacity:1;pointer-events:auto}
+.hero-img-overlay button{background:var(--gold);color:var(--white);border:none;padding:12px 24px;border-radius:50px;font-weight:600;cursor:pointer;font-size:14px;transition:.3s;box-shadow:0 8px 16px rgba(0,0,0,.3)}
+.hero-img-overlay button:hover{background:var(--gold-deep);transform:scale(1.05)}
+.hero-content{position:relative;z-index:2;padding:0 60px;max-width:640px;color:var(--white)}
+.hero .tagline{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-soft);margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.hero .tagline::before{content:"";width:38px;height:1px;background:var(--gold-soft)}
+.hero h1{font-weight:600;font-size:54px;line-height:1.05;margin-bottom:18px}
+.hero h1 em{color:var(--gold-soft);font-style:italic}
+.hero p{font-size:15px;line-height:1.6;color:rgba(255,255,255,.85);max-width:440px;font-weight:300}
+.ph,.ph-large{display:grid;place-items:center;text-align:center;color:var(--gold-deep);width:100%;height:100%}
+.ph{background:repeating-linear-gradient(45deg,var(--cream-2),var(--cream-2) 14px,#f0e6cf 14px,#f0e6cf 28px)}
+.ph-large{background:repeating-linear-gradient(45deg,var(--cream-2),var(--cream-2) 20px,#f0e6cf 20px,#f0e6cf 40px)}
+.ph span{font-size:11px;letter-spacing:2px;text-transform:uppercase;background:rgba(253,250,243,.9);padding:6px 12px;border-radius:8px;font-weight:600}
+.ph-large span{font-size:14px;font-weight:600;background:rgba(253,250,243,.95);padding:10px 18px;border-radius:12px;letter-spacing:1px}
+.strip{margin:-40px 70px 0;position:relative;z-index:10;background:var(--white);border-radius:20px;border:1px solid var(--line);box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(4,1fr)}
+.strip .item{display:flex;align-items:center;gap:14px;padding:20px 24px;border-right:1px solid var(--line)}
+.strip .item:last-child{border-right:none}
+.strip .ic{width:44px;height:44px;border-radius:12px;flex:none;background:var(--cream-2);display:grid;place-items:center;font-size:20px;color:var(--gold-deep)}
+.strip .tt{font-weight:600;font-size:14px}
+.strip .ds{font-size:12px;color:var(--ink-soft)}
+section{padding:0 40px;margin-top:54px}
+.sec-head{text-align:center;margin-bottom:34px}
+.sec-head .kicker{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-deep);margin-bottom:8px}
+.sec-head h2{font-weight:600;font-size:42px}
+.sec-head .deco{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.card{background:var(--white);border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(120,95,20,.25);transition:transform .35s,box-shadow .35s;cursor:pointer;display:flex;flex-direction:column}
+.card:active,.card:hover{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(120,95,20,.4)}
+.card .media{height:200px;position:relative;overflow:hidden}
+.card .media img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.card:hover .media img{transform:scale(1.06)}
+.badge{position:absolute;top:14px;left:14px;z-index:2;background:rgba(253,250,243,.95);color:var(--gold-deep);padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;backdrop-filter:blur(6px)}
+.card .body{padding:20px 22px 22px;display:flex;flex-direction:column;flex:1}
+.card .title{font-weight:600;font-size:24px;line-height:1.1}
+.card .meta{font-size:13px;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:8px}
+.card .feats{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.card .feats span{font-size:11px;background:var(--cream-2);color:var(--ink-soft);padding:4px 10px;border-radius:20px}
+.card .foot{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;padding-top:14px;border-top:1px dashed var(--line)}
+.card .cta{font-size:13px;color:var(--gold-deep);font-weight:600}
+.stars{color:var(--gold);font-size:14px;letter-spacing:1px}
+.room-details{display:none;margin-top:26px;animation:slideDown .4s ease}
+.room-details.active{display:block}
+@keyframes slideDown{from{opacity:0;max-height:0;overflow:hidden}to{opacity:1;max-height:1500px}}
+.room-details h3{margin-bottom:20px;text-align:center;color:var(--ink)}
+.rooms-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.room-item{background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 6px 20px -12px rgba(120,95,20,.15);transition:.3s;cursor:pointer;display:flex;flex-direction:column}
+.room-item:hover{transform:translateY(-6px);box-shadow:0 16px 40px -12px rgba(120,95,20,.3)}
+.room-item-image{width:100%;height:180px;background:var(--cream-2);position:relative;overflow:hidden;display:grid;place-items:center}
+.room-item-image img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.room-item:hover .room-item-image img{transform:scale(1.08)}
+.room-img-upload{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);z-index:10}
+.room-item:hover .room-img-upload{display:grid}
+.room-img-upload button{background:var(--gold);color:var(--white);border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;transition:.3s}
+.room-img-upload button:hover{background:var(--gold-deep)}
+.room-item-info{padding:16px}
+.room-name{font-weight:600;font-size:20px;color:var(--ink)}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.svc{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s}
+.svc:hover,.util:hover{transform:translateY(-4px);box-shadow:0 20px 40px -22px rgba(120,95,20,.4)}
+.svc .media{width:120px;flex:none}
+.svc .media img{width:100%;height:100%;object-fit:cover}
+.svc .body{padding:16px 18px;display:flex;flex-direction:column;justify-content:center}
+.svc .title{font-weight:600;font-size:20px;line-height:1.1}
+.svc .pr{margin-top:8px;font-weight:600;font-size:15px;color:var(--gold-deep)}
+.util{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s}
+.util .ic{font-size:30px}
+.util .title{font-weight:600;font-size:20px;margin-top:8px;line-height:1.1}
+.util .desc{color:var(--ink-soft);font-size:13px;margin-top:6px}
+footer{margin-top:64px;padding:40px;text-align:center;background:linear-gradient(180deg,transparent,var(--cream-2));border-top:1px solid var(--line)}
+footer .crest{margin:0 auto 14px}
+footer h3{font-size:30px;font-weight:600}
+footer p{color:var(--ink-soft);font-size:14px;margin-top:8px}
+footer .info{display:flex;justify-content:center;gap:30px;margin-top:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft)}
+footer .info b{color:var(--ink)}
+.overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px)}
+.overlay.active{display:flex}
+/* ===== ROOM DETAIL MODAL ===== */
+.modal-content{position:relative;background:var(--white);border-radius:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:28px;cursor:pointer;color:var(--ink);z-index:11;width:40px;height:40px;display:grid;place-items:center;transition:.3s}
+.modal-close:hover{transform:scale(1.2)}
+/* Gallery 6 ảnh */
+.modal-gallery-section{padding:16px 16px 0;border-bottom:1px solid var(--line)}
+.modal-gallery-label{font-size:11px;font-weight:600;color:var(--gold-deep);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.modal-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.g-slot{aspect-ratio:4/3;border-radius:10px;overflow:hidden;position:relative;background:var(--cream-2);cursor:pointer;display:grid;place-items:center;border:2px dashed var(--gold-soft);transition:.3s}
+.g-slot.filled{border:2px solid transparent}
+.g-slot:not(.filled):hover{border-color:var(--gold);background:var(--cream)}
+.g-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.g-add{font-size:28px;color:var(--gold-soft);transition:.3s;line-height:1}
+.g-slot:hover .g-add{color:var(--gold)}
+.g-loading{font-size:11px;color:var(--ink-soft);text-align:center;padding:8px}
+.g-del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;z-index:2;display:none;place-items:center;line-height:1}
+.is-admin .g-slot.filled:hover .g-del{display:grid}
+.modal-info-section{padding:28px}
+.modal-room-code-input,.modal-price-input{font-weight:700;border:none;border-bottom:2px solid var(--line);width:100%;padding:6px 0;background:transparent;transition:.3s;margin-bottom:16px}
+.modal-room-code-input{font-size:32px;color:var(--ink)}
+.modal-price-input{font-size:24px;color:var(--gold-deep)}
+.modal-room-code-input:focus,.modal-price-input:focus{outline:none;border-bottom-color:var(--gold)}
+.modal-divider{height:1px;background:var(--line);margin:16px 0}
+.modal-desc-title{font-weight:600;color:var(--gold-deep);font-size:12px;text-transform:uppercase;margin-bottom:10px;letter-spacing:1px}
+.modal-desc-textarea{width:100%;min-height:200px;padding:12px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13px;line-height:1.6;resize:vertical;transition:.3s}
+.modal-desc-textarea:focus,.edit-field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;padding:12px 24px;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px;width:100%;transition:.3s}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(168,134,26,.3)}
+.modal-save-btn{margin-top:16px}
+/* Admin panel */
+.admin-toggle{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(168,134,26,.4);z-index:100;transition:.3s}
+.admin-toggle:hover{transform:scale(1.1)}
+.admin-panel{background:var(--white);border-radius:20px;width:90%;max-width:900px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.admin-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--gold-soft),var(--cream-2))}
+.admin-header h2{font-size:28px;font-weight:600;color:var(--ink)}
+.admin-header-actions{display:flex;gap:8px;align-items:center}
+.logout-btn{background:none;border:1px solid var(--line);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink-soft);font-family:inherit;transition:.25s}
+.logout-btn:hover{background:var(--cream-2);color:var(--ink)}
+.admin-close{background:none;border:none;font-size:24px;color:var(--ink);cursor:pointer;width:40px;height:40px;display:grid;place-items:center}
+.admin-content{padding:24px}
+.room-type-section{margin-bottom:32px;border:1px solid var(--line);border-radius:16px;padding:20px;background:var(--cream)}
+.room-type-title{font-size:22px;font-weight:600;color:var(--ink);margin-bottom:16px}
+.room-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.edit-room-card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:16px}
+.edit-room-name{font-weight:600;font-size:16px;color:var(--ink);margin-bottom:12px}
+.edit-field{margin-bottom:12px}
+.edit-field label{display:block;font-size:12px;font-weight:600;color:var(--gold-deep);text-transform:uppercase;margin-bottom:4px}
+.edit-field input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit}
+.image-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px}
+.save-btn{padding:10px 20px;border-radius:8px;margin-top:12px}
+/* Login */
+.login-box{background:var(--white);border-radius:20px;padding:36px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-box h2{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;text-align:center;margin-bottom:6px;color:var(--ink)}
+.login-box .login-sub{text-align:center;font-size:13px;color:var(--ink-soft);margin-bottom:24px}
+.login-field{margin-bottom:14px}
+.login-field input{width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;transition:.3s;background:var(--cream)}
+.login-field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,39,.1);background:var(--white)}
+.login-error{color:#e74c3c;font-size:13px;text-align:center;margin-bottom:12px;min-height:18px}
+/* Auth gating */
+body:not(.is-admin) .hero-img-overlay,
+body:not(.is-admin) .room-img-upload,
+body:not(.is-admin) .g-slot:not(.filled){display:none!important}
+body:not(.is-admin) .g-slot.filled{cursor:default;pointer-events:none}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+@media(max-width:1024px){.hero h1{font-size:44px}}
 </style>
 </head>
 <body>
-
 <button class="admin-toggle" title="Quản trị">⚙️</button>
 
-<!-- LOGIN MODAL -->
 <div class="overlay" id="loginModal">
   <div class="login-box">
     <h2>Quản Trị</h2>
     <p class="login-sub">Đăng nhập để chỉnh sửa nội dung</p>
-    <div class="login-field">
-      <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-    </div>
-    <div class="login-field">
-      <input type="password" id="loginPassword" placeholder="Mật khẩu" autocomplete="current-password">
-    </div>
+    <div class="login-field"><input type="email" id="loginEmail" placeholder="Email" autocomplete="email"></div>
+    <div class="login-field"><input type="password" id="loginPassword" placeholder="Mật khẩu" autocomplete="current-password"></div>
     <p id="loginError" class="login-error"></p>
     <button id="loginSubmit" class="btn-gold">Đăng nhập</button>
   </div>
 </div>
 
-<!-- ADMIN PANEL -->
 <div class="overlay" id="adminModal">
   <div class="admin-panel">
     <div class="admin-header">
@@ -285,9 +219,7 @@
 <div class="hero reveal">
   <div class="hero-img" id="heroImg">
     <img src="z7895358622076_4d6d6d433cec4623757ec744eaed8653.jpg" alt="Mặt tiền Lan Anh Hotel">
-    <div class="hero-img-overlay">
-      <button type="button" id="heroUploadBtn">📷 Thay ảnh</button>
-    </div>
+    <div class="hero-img-overlay"><button type="button" id="heroUploadBtn">📷 Thay ảnh</button></div>
     <input type="file" id="heroImgUpload" accept="image/*" hidden>
   </div>
   <div class="hero-content">
@@ -337,12 +269,9 @@
 <div id="roomDetailModal" class="overlay">
   <div class="modal-content">
     <button class="modal-close">✕</button>
-    <div class="modal-image-section">
-      <div class="modal-image-container" id="modalImage">
-        <div class="ph-large"><span>Nhấp để thêm ảnh</span></div>
-      </div>
-      <button class="modal-upload-btn" id="modalUploadBtn">📷 Thêm/Thay ảnh</button>
-      <input type="file" id="modalImageInput" accept="image/*" hidden>
+    <div class="modal-gallery-section">
+      <div class="modal-gallery-label">Hình ảnh phòng (tối đa 6 ảnh)</div>
+      <div class="modal-gallery" id="modalGallery"></div>
     </div>
     <div class="modal-info-section">
       <input type="text" id="modalRoomCode" placeholder="" class="modal-room-code-input">
@@ -368,20 +297,16 @@
 
 <script>
 (() => {
-  // ===== SUPABASE =====
   const SUPABASE_URL = 'https://vgwostioavhdwjvjozwl.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnd29zdGlvYXZoZHdqdmpvendsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTE0OTcsImV4cCI6MjA5NjAyNzQ5N30.1EpXWM0Mkwi-WUhiyCi0VewRIVhcbFTw6brGK2Ual5o';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
   let currentUser = null;
 
-  // ===== DATA =====
   const roomTypes = {
     '1g': {label:'Phòng 1 Giường', count:12, fit:'2 người', feats:['Máy lạnh','WiFi','TV','Nước nóng'], start:101},
     '2g': {label:'Phòng 2 Giường', count:10, fit:'4 người', feats:['Máy lạnh','WiFi','TV','Tủ lạnh'], start:201},
     '3g': {label:'Phòng 3 Giường', count:4,  fit:'6 người', feats:['Máy lạnh','WiFi','Smart TV','Ban công'], start:301}
   };
-
   const halls = [
     {name:'Sảnh Khu Sau', price:'500.000đ'},
     {name:'Sảnh Cafe', price:'500.000đ'},
@@ -390,7 +315,6 @@
     {name:'Hình Ảnh Mặt Tiền', price:'Tham quan'},
     {name:'Bãi Đậu Xe', price:'Miễn phí'}
   ];
-
   const utils = [
     {icon:'🌐', title:'WiFi Tốc Độ Cao', desc:'Phủ sóng toàn bộ khách sạn, miễn phí'},
     {icon:'🧺', title:'Dọn Phòng Hằng Ngày', desc:'Vệ sinh & thay khăn mỗi ngày'},
@@ -403,14 +327,13 @@
     for (let i = 0; i < info.count; i++) {
       const id = info.start + i;
       roomsData[type].push({
-        id, name:`Phòng ${id}`, price:'', image_url:null,
+        id, name:`Phòng ${id}`, price:'', images:[],
         roomCode:`P${String(pCounter).padStart(2,'0')}`, description:''
       });
       pCounter++;
     }
   }
 
-  // ===== UTILS =====
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => root.querySelectorAll(sel);
 
@@ -435,7 +358,7 @@
         price: row.price || '',
         roomCode: row.room_code || room.roomCode,
         description: row.description || '',
-        image_url: row.image_url || null
+        images: Array.isArray(row.images) ? row.images : []
       });
     });
   }
@@ -448,11 +371,9 @@
   async function saveRoomToDB(room, type) {
     const { error } = await sb.from('rooms').upsert({
       id: room.id, type,
-      name: room.name,
-      price: room.price,
-      room_code: room.roomCode,
-      description: room.description,
-      image_url: room.image_url || null
+      name: room.name, price: room.price,
+      room_code: room.roomCode, description: room.description,
+      images: room.images || []
     });
     if (error) { alert('Lỗi lưu: ' + error.message); return false; }
     return true;
@@ -472,9 +393,7 @@
   }
 
   // ===== AUTH =====
-  function setAdminMode(on) {
-    document.body.classList.toggle('is-admin', on);
-  }
+  function setAdminMode(on) { document.body.classList.toggle('is-admin', on); }
 
   async function doLogin(email, password) {
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
@@ -491,7 +410,6 @@
 
   // ===== LOGIN MODAL =====
   const loginModal = $('#loginModal');
-
   function showLoginModal() {
     $('#loginError').textContent = '';
     $('#loginEmail').value = '';
@@ -506,8 +424,7 @@
     const errEl = $('#loginError');
     if (!email || !password) { errEl.textContent = 'Vui lòng nhập đủ thông tin'; return; }
     const btn = $('#loginSubmit');
-    btn.textContent = 'Đang đăng nhập...';
-    btn.disabled = true;
+    btn.textContent = 'Đang đăng nhập...'; btn.disabled = true;
     try {
       await doLogin(email, password);
       loginModal.classList.remove('active');
@@ -516,28 +433,20 @@
     } catch(e) {
       errEl.textContent = 'Email hoặc mật khẩu không đúng';
     } finally {
-      btn.textContent = 'Đăng nhập';
-      btn.disabled = false;
+      btn.textContent = 'Đăng nhập'; btn.disabled = false;
     }
   });
-
   $('#loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') $('#loginSubmit').click(); });
   loginModal.addEventListener('click', e => { if (e.target === loginModal) loginModal.classList.remove('active'); });
 
   // ===== ADMIN PANEL =====
   const adminModal = $('#adminModal');
-
   $('.admin-toggle').addEventListener('click', () => {
     if (!currentUser) { showLoginModal(); return; }
     renderAdminPanel();
     adminModal.classList.add('active');
   });
-
-  $('#logoutBtn').addEventListener('click', async () => {
-    await doLogout();
-    adminModal.classList.remove('active');
-  });
-
+  $('#logoutBtn').addEventListener('click', async () => { await doLogout(); adminModal.classList.remove('active'); });
   $('.admin-close').addEventListener('click', () => adminModal.classList.remove('active'));
   adminModal.addEventListener('click', e => { if (e.target === adminModal) adminModal.classList.remove('active'); });
 
@@ -561,7 +470,6 @@
         </div>
       </div>
     `).join('');
-
     $$('#roomTypeGrid .card').forEach(card => {
       card.addEventListener('click', () => toggleRoomDetails(card.dataset.roomType));
     });
@@ -594,6 +502,7 @@
         <div class="room-item-info">
           <div class="room-name">${room.name}</div>
           ${room.price ? `<div style="font-size:13px;color:var(--gold-deep);font-weight:600;margin-top:4px;">${room.price}</div>` : ''}
+          ${room.images?.length > 1 ? `<div style="font-size:11px;color:var(--ink-soft);margin-top:2px;">${room.images.length} ảnh</div>` : ''}
         </div>
       </div>
     `).join('');
@@ -606,24 +515,23 @@
       const uploadBtn = item.querySelector('.img-upload-btn');
       const room = roomsData[rType].find(r => r.id === roomId);
 
-      if (room?.image_url) applyImage(imgContainer, room.image_url);
+      if (room?.images?.[0]) applyImage(imgContainer, room.images[0]);
 
       uploadBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
-
       fileInput.addEventListener('change', async e => {
         const file = e.target.files[0];
         if (!file) return;
         uploadBtn.textContent = '⏳ Đang tải...';
-        const url = await uploadImage(file, `rooms/${roomId}`);
+        const url = await uploadImage(file, `rooms/${roomId}/0`);
         if (url && room) {
-          room.image_url = url;
+          if (!room.images) room.images = [];
+          room.images[0] = url;
           applyImage(imgContainer, url);
           await saveRoomToDB(room, rType);
           uploadBtn.textContent = '✓ Đã lưu';
           setTimeout(() => { uploadBtn.textContent = '📷 Thêm ảnh'; }, 2000);
         }
       });
-
       item.addEventListener('click', e => {
         if (e.target.closest('.img-upload-btn') || e.target.closest('input')) return;
         openRoomDetail(roomId, rType);
@@ -651,48 +559,88 @@
     `).join('');
   }
 
-  // ===== ROOM DETAIL MODAL =====
+  // ===== GALLERY 6 ẢNH =====
   const modal = $('#roomDetailModal');
   let current = {id:null, type:null};
+
+  function renderModalGallery(room) {
+    const gallery = $('#modalGallery');
+    gallery.innerHTML = '';
+    const images = room.images || [];
+
+    for (let i = 0; i < 6; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'g-slot' + (images[i] ? ' filled' : '');
+
+      if (images[i]) {
+        const img = document.createElement('img');
+        img.src = images[i];
+        slot.appendChild(img);
+
+        const del = document.createElement('button');
+        del.className = 'g-del';
+        del.textContent = '✕';
+        del.title = 'Xóa ảnh';
+        del.addEventListener('click', async e => {
+          e.stopPropagation();
+          room.images.splice(i, 1);
+          await saveRoomToDB(room, current.type);
+          renderModalGallery(room);
+          refreshRoomCard(room, current.type);
+        });
+        slot.appendChild(del);
+      } else {
+        const add = document.createElement('div');
+        add.className = 'g-add';
+        add.textContent = '+';
+        slot.appendChild(add);
+      }
+
+      slot.addEventListener('click', () => {
+        if (!currentUser) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.addEventListener('change', async e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          slot.innerHTML = '<div class="g-loading">⏳ Đang tải...</div>';
+          const url = await uploadImage(file, `rooms/${room.id}/${i}`);
+          if (url) {
+            if (!room.images) room.images = [];
+            room.images[i] = url;
+            await saveRoomToDB(room, current.type);
+            renderModalGallery(room);
+            refreshRoomCard(room, current.type);
+          } else {
+            renderModalGallery(room);
+          }
+        });
+        input.click();
+      });
+
+      gallery.appendChild(slot);
+    }
+  }
+
+  function refreshRoomCard(room, type) {
+    const detailsEl = $(`#rooms-${type}`);
+    if (detailsEl?.classList.contains('active')) renderRoomItems(type);
+  }
 
   function openRoomDetail(roomId, type) {
     current = {id:roomId, type};
     const room = roomsData[type].find(r => r.id === roomId);
     if (!room) return;
-
     $('#modalRoomCode').value = room.roomCode || `P${roomId}`;
     $('#modalPrice').value = room.price || '';
     $('#modalDescription').value = room.description || '';
-
-    const imgContainer = $('#modalImage');
-    const oldImg = imgContainer.querySelector('img');
-    if (oldImg) oldImg.remove();
-    const ph = imgContainer.querySelector('.ph-large');
-    if (ph) ph.style.display = 'grid';
-
-    if (room.image_url) applyImage(imgContainer, room.image_url);
+    renderModalGallery(room);
     modal.classList.add('active');
   }
 
   $('.modal-close').addEventListener('click', () => modal.classList.remove('active'));
   modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
-
-  $('#modalUploadBtn').addEventListener('click', () => $('#modalImageInput').click());
-
-  $('#modalImageInput').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    if (!file || !current.id) return;
-    const btn = $('#modalUploadBtn');
-    btn.textContent = '⏳ Đang tải...';
-    const url = await uploadImage(file, `rooms/${current.id}`);
-    if (url) {
-      applyImage($('#modalImage'), url);
-      const room = roomsData[current.type]?.find(r => r.id === current.id);
-      if (room) room.image_url = url;
-      btn.textContent = '✓ Đã tải lên';
-      setTimeout(() => { btn.textContent = '📷 Thêm/Thay ảnh'; }, 2000);
-    }
-  });
 
   $('.modal-save-btn').addEventListener('click', async () => {
     if (!current.id) return;
@@ -706,15 +654,14 @@
     const ok = await saveRoomToDB(room, current.type);
     if (ok) {
       btn.textContent = '✓ Đã lưu!';
-      const detailsEl = $(`#rooms-${current.type}`);
-      if (detailsEl?.classList.contains('active')) renderRoomItems(current.type);
+      refreshRoomCard(room, current.type);
       setTimeout(() => { btn.textContent = '💾 Lưu'; modal.classList.remove('active'); }, 1000);
     } else {
       btn.textContent = '💾 Lưu';
     }
   });
 
-  // ===== RENDER ADMIN PANEL =====
+  // ===== ADMIN PANEL RENDER =====
   function renderAdminPanel() {
     $('#adminContent').innerHTML = Object.entries(roomTypes).map(([type, info]) => `
       <div class="room-type-section">
@@ -723,13 +670,9 @@
           ${roomsData[type].map(room => `
             <div class="edit-room-card" data-room-id="${room.id}" data-type="${type}">
               <div class="edit-room-name">${room.name}</div>
-              ${room.image_url ? `<img src="${room.image_url}" class="image-preview" alt="${room.name}">` : ''}
+              ${room.images?.[0] ? `<img src="${room.images[0]}" class="image-preview" alt="${room.name}">` : ''}
               <div class="edit-field"><label>Tên phòng</label><input type="text" class="f-name" value="${room.name}"></div>
               <div class="edit-field"><label>Giá /đêm</label><input type="text" class="f-price" value="${room.price}"></div>
-              <div class="edit-field">
-                <label>Ảnh phòng</label>
-                <div class="image-upload"><input type="file" accept="image/*" class="f-img" hidden><div>Nhấp để chọn ảnh</div></div>
-              </div>
               <button class="btn-gold save-btn">Lưu</button>
             </div>
           `).join('')}
@@ -738,26 +681,6 @@
     `).join('');
 
     $$('.edit-room-card').forEach(card => {
-      const fileInput = card.querySelector('.f-img');
-      card.querySelector('.image-upload').addEventListener('click', () => fileInput.click());
-
-      fileInput.addEventListener('change', e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-          let preview = card.querySelector('.image-preview');
-          if (!preview) {
-            preview = document.createElement('img');
-            preview.className = 'image-preview';
-            card.insertBefore(preview, card.querySelector('.edit-field'));
-          }
-          preview.src = ev.target.result;
-          preview._file = file;
-        };
-        reader.readAsDataURL(file);
-      });
-
       card.querySelector('.save-btn').addEventListener('click', async () => {
         const type = card.dataset.type;
         const id = +card.dataset.roomId;
@@ -767,16 +690,10 @@
         room.price = card.querySelector('.f-price').value;
         const saveBtn = card.querySelector('.save-btn');
         saveBtn.textContent = '⏳ Đang lưu...';
-        const preview = card.querySelector('.image-preview');
-        if (preview?._file) {
-          const url = await uploadImage(preview._file, `rooms/${id}`);
-          if (url) room.image_url = url;
-        }
         const ok = await saveRoomToDB(room, type);
         if (ok) {
           saveBtn.textContent = '✓ Đã lưu!';
-          const detailsEl = $(`#rooms-${type}`);
-          if (detailsEl?.classList.contains('active')) renderRoomItems(type);
+          refreshRoomCard(room, type);
           setTimeout(() => { saveBtn.textContent = 'Lưu'; }, 2000);
         } else {
           saveBtn.textContent = 'Lưu';
@@ -787,7 +704,6 @@
 
   // ===== HERO IMAGE =====
   $('#heroUploadBtn').addEventListener('click', () => $('#heroImgUpload').click());
-
   $('#heroImgUpload').addEventListener('change', async e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -802,7 +718,7 @@
     }
   });
 
-  // ===== REVEAL ANIMATION =====
+  // ===== REVEAL =====
   function observeReveals() {
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => {
@@ -820,9 +736,7 @@
     const { data: { session } } = await sb.auth.getSession();
     currentUser = session?.user || null;
     setAdminMode(!!currentUser);
-
     await Promise.all([loadRoomsFromDB(), loadHeroImage()]);
-
     renderRoomTypeCards();
     renderHalls();
     renderUtils();
