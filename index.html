@@ -79,10 +79,13 @@ section{padding:0 40px;margin-top:54px}
 .room-item-image{width:100%;height:180px;background:var(--cream-2);position:relative;overflow:hidden;display:grid;place-items:center}
 .room-item-image img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .room-item:hover .room-item-image img{transform:scale(1.08)}
-.room-img-upload{position:absolute;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);z-index:10}
-.room-item:hover .room-img-upload{display:grid}
-.room-img-upload button{background:var(--gold);color:var(--white);border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;transition:.3s}
-.room-img-upload button:hover{background:var(--gold-deep)}
+.room-img-upload{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,.5);z-index:10}
+.room-item:hover .room-img-upload{display:flex}
+.room-img-upload button{border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;font-size:12px;transition:.3s;min-width:110px}
+.img-upload-btn{background:var(--gold);color:var(--white)}
+.img-upload-btn:hover{background:var(--gold-deep)}
+.img-del-btn{background:rgba(231,76,60,.9);color:#fff}
+.img-del-btn:hover{background:#c0392b}
 .room-item-info{padding:16px}
 .room-name{font-weight:600;font-size:20px;color:var(--ink)}
 .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
@@ -334,7 +337,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     for (let i = 0; i < info.count; i++) {
       const id = info.start + i;
       roomsData[type].push({
-        id, name:`Phòng ${id}`, price:'', images:[],
+        id, name:`Phòng ${id}`, price:'', images:[], cover_url:null,
         roomCode:`P${String(pCounter).padStart(2,'0')}`, description:''
       });
       pCounter++;
@@ -365,7 +368,8 @@ body:not(.is-admin) .carousel-del{display:none!important}
         price: row.price || '',
         roomCode: row.room_code || room.roomCode,
         description: row.description || '',
-        images: Array.isArray(row.images) ? row.images : []
+        images: Array.isArray(row.images) ? row.images : [],
+        cover_url: row.image_url || null
       });
     });
   }
@@ -380,7 +384,8 @@ body:not(.is-admin) .carousel-del{display:none!important}
       id: room.id, type,
       name: room.name, price: room.price,
       room_code: room.roomCode, description: room.description,
-      images: room.images || []
+      images: room.images || [],
+      image_url: room.cover_url || null
     });
     if (error) { alert('Lỗi lưu: ' + error.message); return false; }
     return true;
@@ -502,7 +507,8 @@ body:not(.is-admin) .carousel-del{display:none!important}
         <div class="room-item-image">
           <div class="ph"><span>Ảnh ${room.name}</span></div>
           <div class="room-img-upload">
-            <button type="button" class="img-upload-btn">📷 Thêm ảnh</button>
+            <button type="button" class="img-upload-btn">📷 Thay ảnh bìa</button>
+            <button type="button" class="img-del-btn" style="display:none">🗑 Xóa ảnh bìa</button>
             <input type="file" accept="image/*" hidden>
           </div>
         </div>
@@ -520,24 +526,41 @@ body:not(.is-admin) .carousel-del{display:none!important}
       const imgContainer = item.querySelector('.room-item-image');
       const fileInput = item.querySelector('input[type="file"]');
       const uploadBtn = item.querySelector('.img-upload-btn');
+      const delBtn = item.querySelector('.img-del-btn');
       const room = roomsData[rType].find(r => r.id === roomId);
 
-      if (room?.images?.[0]) applyImage(imgContainer, room.images[0]);
+      if (room?.cover_url) {
+        applyImage(imgContainer, room.cover_url);
+        delBtn.style.display = '';
+      }
 
       uploadBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+
       fileInput.addEventListener('change', async e => {
         const file = e.target.files[0];
         if (!file) return;
         uploadBtn.textContent = '⏳ Đang tải...';
-        const url = await uploadImage(file, `rooms/${roomId}/0`);
+        const url = await uploadImage(file, `rooms/${roomId}/cover`);
         if (url && room) {
-          if (!room.images) room.images = [];
-          room.images[0] = url;
+          room.cover_url = url;
           applyImage(imgContainer, url);
+          delBtn.style.display = '';
           await saveRoomToDB(room, rType);
           uploadBtn.textContent = '✓ Đã lưu';
-          setTimeout(() => { uploadBtn.textContent = '📷 Thêm ảnh'; }, 2000);
+          setTimeout(() => { uploadBtn.textContent = '📷 Thay ảnh bìa'; }, 2000);
         }
+      });
+
+      delBtn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('Xóa ảnh bìa phòng này?')) return;
+        room.cover_url = null;
+        delBtn.style.display = 'none';
+        const oldImg = imgContainer.querySelector('img');
+        if (oldImg) oldImg.remove();
+        const ph = imgContainer.querySelector('.ph');
+        if (ph) ph.style.display = '';
+        await saveRoomToDB(room, rType);
       });
       item.addEventListener('click', e => {
         if (e.target.closest('.img-upload-btn') || e.target.closest('input')) return;
