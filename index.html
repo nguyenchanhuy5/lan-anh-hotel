@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>LAN ANH HOTEL</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -244,7 +245,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
 
 <div class="hero reveal">
   <div class="hero-img" id="heroImg">
-    <img src="z7895358622076_4d6d6d433cec4623757ec744eaed8653.jpg" alt="Mặt tiền Lan Anh Hotel">
+    <img src="z7895358622076_4d6d6d433cec4623757ec744eaed8653.jpg" alt="Mặt tiền Lan Anh Hotel" decoding="async">
     <div class="hero-img-overlay"><button type="button" id="heroUploadBtn">📷 Thay ảnh</button></div>
     <input type="file" id="heroImgUpload" accept="image/*" hidden>
   </div>
@@ -413,13 +414,23 @@ body:not(.is-admin) .carousel-del{display:none!important}
     return true;
   }
 
-  async function uploadImage(file, path) {
-    const ext = file.name.split('.').pop();
-    const fullPath = `${path}.${ext}`;
-    const { error } = await sb.storage.from('images').upload(fullPath, file, { upsert:true, contentType:file.type });
-    if (error) { console.error(error); return null; }
-    const { data } = sb.storage.from('images').getPublicUrl(fullPath);
-    return data.publicUrl;
+  async function uploadImage(file, prefix) {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const fullPath = `${prefix}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const { error } = await sb.storage.from('images').upload(fullPath, file, { contentType:file.type });
+    if (error) { console.error(error); alert('Lỗi tải ảnh: ' + error.message); return null; }
+    return sb.storage.from('images').getPublicUrl(fullPath).data.publicUrl;
+  }
+
+  function pathFromImageUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    const i = url.indexOf('/images/');
+    return i >= 0 ? url.slice(i + 8) : null;
+  }
+
+  function deleteImageFile(url) {
+    const p = pathFromImageUrl(url);
+    if (p) sb.storage.from('images').remove([p]).catch(() => {});
   }
 
   async function saveHeroImageUrl(url) {
@@ -491,7 +502,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
       <div class="card reveal" data-room-type="${type}">
         <div class="media">
           <span class="badge">${info.count} phòng</span>
-          <img src="${type.toUpperCase()}.jpg" alt="${info.label}" style="width:100%;height:100%;object-fit:cover;">
+          <img src="${type.toUpperCase()}.jpg" alt="${info.label}" decoding="async" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
         </div>
         <div class="body">
           <div class="title">${info.label}</div>
@@ -562,20 +573,26 @@ body:not(.is-admin) .carousel-del{display:none!important}
         const file = e.target.files[0];
         if (!file) return;
         uploadBtn.textContent = '⏳ Đang tải...';
-        const url = await uploadImage(file, `rooms/${roomId}/cover`);
+        const oldUrl = room?.cover_url;
+        const url = await uploadImage(file, `rooms/${roomId}`);
+        fileInput.value = '';
         if (url && room) {
           room.cover_url = url;
           applyImage(imgContainer, url);
           delBtn.style.display = '';
           await saveRoomToDB(room, rType);
+          if (oldUrl && oldUrl !== url) deleteImageFile(oldUrl);
           uploadBtn.textContent = '✓ Đã lưu';
           setTimeout(() => { uploadBtn.textContent = '📷 Thay ảnh bìa'; }, 2000);
+        } else {
+          uploadBtn.textContent = '📷 Thay ảnh bìa';
         }
       });
 
       delBtn.addEventListener('click', async e => {
         e.stopPropagation();
         if (!confirm('Xóa ảnh bìa phòng này?')) return;
+        const oldUrl = room.cover_url;
         room.cover_url = null;
         delBtn.style.display = 'none';
         const oldImg = imgContainer.querySelector('img');
@@ -583,6 +600,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
         const ph = imgContainer.querySelector('.ph');
         if (ph) ph.style.display = '';
         await saveRoomToDB(room, rType);
+        if (oldUrl) deleteImageFile(oldUrl);
       });
       item.addEventListener('click', e => {
         if (e.target.closest('.img-upload-btn') || e.target.closest('input')) return;
@@ -616,9 +634,21 @@ body:not(.is-admin) .carousel-del{display:none!important}
   let current = {id:null, type:null};
   let carouselIdx = 0;
 
+  async function removeCarouselImage(room, confirmFirst) {
+    if (confirmFirst && !confirm('Xóa ảnh này?')) return;
+    const removedUrl = room.images[carouselIdx];
+    room.images.splice(carouselIdx, 1);
+    if (carouselIdx >= room.images.length) carouselIdx = Math.max(0, room.images.length - 1);
+    await saveRoomToDB(room, current.type);
+    if (removedUrl) deleteImageFile(removedUrl);
+    renderModalCarousel(room);
+    refreshRoomCard(room, current.type);
+  }
+
   function renderModalCarousel(room) {
     const wrap = $('#modalCarouselWrap');
     const images = (room.images || []).filter(Boolean);
+    if (carouselIdx >= images.length) carouselIdx = Math.max(0, images.length - 1);
 
     const car = document.createElement('div');
     car.className = 'modal-carousel';
@@ -626,8 +656,6 @@ body:not(.is-admin) .carousel-del{display:none!important}
     if (images.length === 0) {
       car.innerHTML = '<div class="carousel-empty"><div class="ce-icon">📷</div><div class="ce-txt">Chưa có ảnh</div></div>';
     } else {
-      if (carouselIdx >= images.length) carouselIdx = images.length - 1;
-
       const track = document.createElement('div');
       track.className = 'carousel-track';
       track.style.transform = `translateX(-${carouselIdx * 100}%)`;
@@ -636,11 +664,18 @@ body:not(.is-admin) .carousel-del{display:none!important}
         slide.className = 'carousel-slide';
         const img = document.createElement('img');
         img.src = url;
+        img.decoding = 'async';
         slide.appendChild(img);
         slide.addEventListener('click', () => openLightbox(images, i));
         track.appendChild(slide);
       });
       car.appendChild(track);
+
+      let counter;
+      const updateView = () => {
+        track.style.transform = `translateX(-${carouselIdx * 100}%)`;
+        if (counter) counter.textContent = `${carouselIdx + 1}/${images.length}`;
+      };
 
       if (images.length > 1) {
         const prev = document.createElement('button');
@@ -648,7 +683,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
         prev.innerHTML = '&#8249;';
         prev.addEventListener('click', () => {
           carouselIdx = (carouselIdx - 1 + images.length) % images.length;
-          renderModalCarousel(room);
+          updateView();
         });
         car.appendChild(prev);
 
@@ -657,11 +692,11 @@ body:not(.is-admin) .carousel-del{display:none!important}
         next.innerHTML = '&#8250;';
         next.addEventListener('click', () => {
           carouselIdx = (carouselIdx + 1) % images.length;
-          renderModalCarousel(room);
+          updateView();
         });
         car.appendChild(next);
 
-        const counter = document.createElement('div');
+        counter = document.createElement('div');
         counter.className = 'carousel-counter';
         counter.textContent = `${carouselIdx + 1}/${images.length}`;
         car.appendChild(counter);
@@ -671,13 +706,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
       del.className = 'carousel-del';
       del.textContent = '✕';
       del.title = 'Xóa ảnh này';
-      del.addEventListener('click', async () => {
-        room.images.splice(carouselIdx, 1);
-        if (carouselIdx >= room.images.filter(Boolean).length) carouselIdx = Math.max(0, carouselIdx - 1);
-        await saveRoomToDB(room, current.type);
-        renderModalCarousel(room);
-        refreshRoomCard(room, current.type);
-      });
+      del.addEventListener('click', () => removeCarouselImage(room, false));
       car.appendChild(del);
     }
 
@@ -692,15 +721,16 @@ body:not(.is-admin) .carousel-del{display:none!important}
           const file = e.target.files[0];
           if (!file) return;
           addBtn.textContent = '⏳ Đang tải...';
-          const idx = (room.images || []).filter(Boolean).length;
-          const url = await uploadImage(file, `rooms/${room.id}/${idx}`);
+          const url = await uploadImage(file, `rooms/${room.id}`);
           if (url) {
             if (!room.images) room.images = [];
             room.images.push(url);
-            carouselIdx = room.images.filter(Boolean).length - 1;
+            carouselIdx = room.images.length - 1;
             await saveRoomToDB(room, current.type);
             renderModalCarousel(room);
             refreshRoomCard(room, current.type);
+          } else {
+            addBtn.textContent = '+ Thêm ảnh';
           }
         });
         input.click();
@@ -711,23 +741,13 @@ body:not(.is-admin) .carousel-del{display:none!important}
     wrap.innerHTML = '';
     wrap.appendChild(car);
 
-    // Nút xóa bên dưới carousel (chỉ hiện khi có ảnh)
     const actions = document.createElement('div');
     actions.className = 'carousel-actions';
     if (images.length > 0) {
       const delBtn = document.createElement('button');
       delBtn.className = 'carousel-del-btn';
       delBtn.textContent = '🗑 Xóa ảnh này';
-      delBtn.addEventListener('click', async () => {
-        if (!confirm('Xóa ảnh này?')) return;
-        delBtn.disabled = true;
-        delBtn.textContent = '⏳ Đang xóa...';
-        room.images.splice(carouselIdx, 1);
-        if (carouselIdx >= room.images.filter(Boolean).length) carouselIdx = Math.max(0, carouselIdx - 1);
-        await saveRoomToDB(room, current.type);
-        renderModalCarousel(room);
-        refreshRoomCard(room, current.type);
-      });
+      delBtn.addEventListener('click', () => removeCarouselImage(room, true));
       actions.appendChild(delBtn);
     }
     wrap.appendChild(actions);
@@ -780,15 +800,17 @@ body:not(.is-admin) .carousel-del{display:none!important}
       <div class="room-type-section">
         <div class="room-type-title">${info.label}</div>
         <div class="room-list">
-          ${roomsData[type].map(room => `
+          ${roomsData[type].map(room => {
+            const preview = room.cover_url || room.images?.[0];
+            return `
             <div class="edit-room-card" data-room-id="${room.id}" data-type="${type}">
               <div class="edit-room-name">${room.name}</div>
-              ${room.images?.[0] ? `<img src="${room.images[0]}" class="image-preview" alt="${room.name}">` : ''}
+              ${preview ? `<img src="${preview}" class="image-preview" alt="${room.name}" decoding="async" loading="lazy">` : ''}
               <div class="edit-field"><label>Tên phòng</label><input type="text" class="f-name" value="${room.name}"></div>
               <div class="edit-field"><label>Giá /đêm</label><input type="text" class="f-price" value="${room.price}"></div>
               <button class="btn-gold save-btn">Lưu</button>
-            </div>
-          `).join('')}
+            </div>`;
+          }).join('')}
         </div>
       </div>
     `).join('');
@@ -821,13 +843,19 @@ body:not(.is-admin) .carousel-del{display:none!important}
     const file = e.target.files[0];
     if (!file) return;
     const btn = $('#heroUploadBtn');
+    const input = e.target;
     btn.textContent = '⏳ Đang tải...';
-    const url = await uploadImage(file, 'hero/main');
+    const oldUrl = $('#heroImg img')?.src;
+    const url = await uploadImage(file, 'hero');
+    input.value = '';
     if (url) {
       applyImage($('#heroImg'), url);
       await saveHeroImageUrl(url);
+      if (oldUrl && oldUrl !== url) deleteImageFile(oldUrl);
       btn.textContent = '✓ Đã cập nhật!';
       setTimeout(() => { btn.textContent = '📷 Thay ảnh'; }, 2000);
+    } else {
+      btn.textContent = '📷 Thay ảnh';
     }
   });
 
