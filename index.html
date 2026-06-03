@@ -136,9 +136,10 @@ footer .info b{color:var(--ink)}
 .carousel-del-btn:hover{background:#e74c3c;color:#fff}
 .carousel-del-btn:disabled{opacity:.5;cursor:not-allowed}
 .modal-info-section{padding:28px}
-.modal-room-code-input,.modal-price-input{font-weight:700;border:none;border-bottom:2px solid var(--line);width:100%;padding:6px 0;background:transparent;transition:.3s;margin-bottom:16px}
+.modal-room-code-input,.modal-price-input,.modal-name-input{font-weight:700;border:none;border-bottom:2px solid var(--line);width:100%;padding:6px 0;background:transparent;transition:.3s;margin-bottom:16px}
 .modal-room-code-input{font-size:32px;color:var(--ink)}
 .modal-price-input{font-size:24px;color:var(--gold-deep)}
+.modal-name-input{font-size:18px;color:var(--ink-soft);font-family:'Be Vietnam Pro',sans-serif;font-weight:600}
 .modal-room-code-input:focus,.modal-price-input:focus{outline:none;border-bottom-color:var(--gold)}
 .modal-divider{height:1px;background:var(--line);margin:16px 0}
 .modal-desc-title{font-weight:600;color:var(--gold-deep);font-size:12px;text-transform:uppercase;margin-bottom:10px;letter-spacing:1px}
@@ -284,6 +285,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     <button class="modal-close">✕</button>
     <div id="modalCarouselWrap"></div>
     <div class="modal-info-section">
+      <input type="text" id="modalRoomName" placeholder="Tên phòng" class="modal-name-input">
       <input type="text" id="modalRoomCode" placeholder="" class="modal-room-code-input">
       <input type="text" id="modalPrice" placeholder="GIÁ" class="modal-price-input">
       <div class="modal-divider"></div>
@@ -720,6 +722,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     carouselIdx = 0;
     const room = roomsData[type].find(r => r.id === roomId);
     if (!room) return;
+    $('#modalRoomName').value = room.name || '';
     $('#modalRoomCode').value = room.roomCode || `P${roomId}`;
     $('#modalPrice').value = room.price || '';
     $('#modalDescription').value = room.description || '';
@@ -734,6 +737,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     if (!current.id) return;
     const room = roomsData[current.type]?.find(r => r.id === current.id);
     if (!room) return;
+    room.name = $('#modalRoomName').value || room.name;
     room.roomCode = $('#modalRoomCode').value;
     room.price = $('#modalPrice').value;
     room.description = $('#modalDescription').value;
