@@ -405,14 +405,22 @@ body:not(.is-admin) .carousel-del{display:none!important}
   }
 
   async function saveRoomToDB(room, type) {
-    const { error } = await sb.from('rooms').upsert({
+    const base = {
       id: room.id, type,
       name: room.name, price: room.price,
       room_code: room.roomCode, description: room.description,
-      images: room.images || [],
       image_url: room.cover_url || null
-    });
-    if (error) { alert('Lỗi lưu: ' + error.message); return false; }
+    };
+    // Thử lưu kèm images, nếu lỗi do cột chưa tồn tại thì lưu không có images
+    const { error } = await sb.from('rooms').upsert({ ...base, images: room.images || [] });
+    if (error) {
+      if (error.message?.includes('images')) {
+        const { error: err2 } = await sb.from('rooms').upsert(base);
+        if (err2) { alert('Lỗi lưu: ' + err2.message); return false; }
+      } else {
+        alert('Lỗi lưu: ' + error.message); return false;
+      }
+    }
     return true;
   }
 
