@@ -424,13 +424,28 @@ body:not(.is-admin) .carousel-del{display:none!important}
     return true;
   }
 
+  function compressImage(file, maxPx=1400, quality=0.82) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(new File([blob], file.name, {type:'image/jpeg'})), 'image/jpeg', quality);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   async function uploadImage(file, prefix) {
-    if (isUploading) { console.warn('Đang tải một ảnh khác, bỏ qua lượt bấm này'); return null; }
+    if (isUploading) { console.warn('upload đang chạy, bỏ qua'); return null; }
     isUploading = true;
     try {
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const fullPath = `${prefix}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const { error } = await sb.storage.from('images').upload(fullPath, file, { contentType:file.type });
+      const compressed = await compressImage(file);
+      const fullPath = `${prefix}/${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
+      const { error } = await sb.storage.from('images').upload(fullPath, compressed, { contentType:'image/jpeg' });
       if (error) { console.error(error); alert('Lỗi tải ảnh: ' + error.message); return null; }
       return sb.storage.from('images').getPublicUrl(fullPath).data.publicUrl;
     } finally {
