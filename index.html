@@ -90,13 +90,15 @@ section{padding:0 40px;margin-top:54px}
 .room-item-info{padding:16px}
 .room-name{font-weight:600;font-size:20px;color:var(--ink)}
 .svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.svc{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s}
-.svc:hover,.util:hover{transform:translateY(-4px);box-shadow:0 20px 40px -22px rgba(120,95,20,.4)}
-.svc .media{width:120px;flex:none}
-.svc .media img{width:100%;height:100%;object-fit:cover}
-.svc .body{padding:16px 18px;display:flex;flex-direction:column;justify-content:center}
-.svc .title{font-weight:600;font-size:20px;line-height:1.1}
-.svc .pr{margin-top:8px;font-weight:600;font-size:15px;color:var(--gold-deep)}
+.svc{background:var(--white);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 30px -18px rgba(120,95,20,.25);transition:transform .35s,box-shadow .35s;cursor:pointer}
+.svc:hover{transform:translateY(-6px);box-shadow:0 26px 50px -22px rgba(120,95,20,.4)}
+.util:hover{transform:translateY(-4px);box-shadow:0 20px 40px -22px rgba(120,95,20,.4)}
+.svc .media{width:100%;aspect-ratio:4/5;position:relative;overflow:hidden;background:var(--cream-2);display:grid;place-items:center;flex:none}
+.svc .media img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.svc:hover .media img{transform:scale(1.06)}
+.svc .body{padding:16px 18px;display:flex;flex-direction:column}
+.svc .title{font-weight:600;font-size:22px;line-height:1.1}
+.svc .pr{margin-top:6px;font-weight:600;font-size:15px;color:var(--gold-deep)}
 .util{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 24px -16px rgba(120,95,20,.25);transition:.3s}
 .util .ic{font-size:30px}
 .util .title{font-weight:600;font-size:20px;margin-top:8px;line-height:1.1}
@@ -343,12 +345,12 @@ body:not(.is-admin) .carousel-del{display:none!important}
     '3g': {label:'Phòng 3 Giường', count:4,  fit:'6 người', feats:['Máy lạnh','WiFi','Smart TV','Ban công'], start:301}
   };
   const halls = [
-    {name:'Sảnh Khu Sau', price:'500.000đ'},
-    {name:'Sảnh Cafe', price:'500.000đ'},
-    {name:'Sảnh Lễ Tân', price:'300.000đ'},
-    {name:'Sảnh Lễ Tân (Free)', price:'Miễn phí'},
-    {name:'Hình Ảnh Mặt Tiền', price:'Tham quan'},
-    {name:'Bãi Đậu Xe', price:'Miễn phí'}
+    {id:1, name:'Sảnh Khu Sau',       price:'500.000đ',  cover_url:null, images:[], description:''},
+    {id:2, name:'Sảnh Cafe',           price:'500.000đ',  cover_url:null, images:[], description:''},
+    {id:3, name:'Sảnh Lễ Tân',         price:'300.000đ',  cover_url:null, images:[], description:''},
+    {id:4, name:'Sảnh Lễ Tân (Free)',  price:'Miễn phí', cover_url:null, images:[], description:''},
+    {id:5, name:'Hình Ảnh Mặt Tiền',  price:'Tham quan', cover_url:null, images:[], description:''},
+    {id:6, name:'Bãi Đậu Xe',          price:'Miễn phí', cover_url:null, images:[], description:''}
   ];
   const utils = [
     {icon:'🌐', title:'WiFi Tốc Độ Cao', desc:'Phủ sóng toàn bộ khách sạn, miễn phí'},
@@ -462,6 +464,38 @@ body:not(.is-admin) .carousel-del{display:none!important}
   function deleteImageFile(url) {
     const p = pathFromImageUrl(url);
     if (p) sb.storage.from('images').remove([p]).catch(() => {});
+  }
+
+  async function loadHallsFromDB() {
+    const { data } = await sb.from('halls').select('*');
+    if (!data) return;
+    data.forEach(row => {
+      const hall = halls.find(h => h.id === row.id);
+      if (hall) Object.assign(hall, {
+        name: row.name || hall.name,
+        price: row.price || hall.price,
+        description: row.description || '',
+        cover_url: row.image_url || null,
+        images: Array.isArray(row.images) ? row.images : []
+      });
+    });
+  }
+
+  async function saveHallToDB(hall) {
+    const base = {
+      id: hall.id,
+      name: hall.name, price: hall.price,
+      description: hall.description,
+      image_url: hall.cover_url || null
+    };
+    const { error } = await sb.from('halls').upsert({ ...base, images: hall.images || [] });
+    if (error) {
+      if (error.message?.includes('images')) {
+        const { error: e2 } = await sb.from('halls').upsert(base);
+        if (e2) { alert('Lỗi lưu: ' + e2.message); return false; }
+      } else { alert('Lỗi lưu: ' + error.message); return false; }
+    }
+    return true;
   }
 
   async function saveHeroImageUrl(url) {
@@ -643,11 +677,61 @@ body:not(.is-admin) .carousel-del{display:none!important}
   // ===== RENDER HALLS & UTILS =====
   function renderHalls() {
     $('#hallGrid').innerHTML = halls.map(h => `
-      <div class="svc reveal">
-        <div class="media"><div class="ph"><span>${h.name}</span></div></div>
-        <div class="body"><div class="title">${h.name}</div><div class="pr">${h.price}</div></div>
+      <div class="svc reveal" data-hall-id="${h.id}">
+        <div class="media">
+          <div class="ph"><span>${h.name}</span></div>
+          <div class="room-img-upload">
+            <button type="button" class="img-upload-btn">📷 Thay ảnh bìa</button>
+            <button type="button" class="img-del-btn" style="display:none">🗑 Xóa ảnh bìa</button>
+            <input type="file" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="body">
+          <div class="title">${h.name}</div>
+          <div class="pr">${h.price}</div>
+        </div>
       </div>
     `).join('');
+
+    document.querySelectorAll('#hallGrid .svc').forEach(card => {
+      const hallId = +card.dataset.hallId;
+      const hall = halls.find(h => h.id === hallId);
+      const media = card.querySelector('.media');
+      const uploadBtn = card.querySelector('.img-upload-btn');
+      const delBtn = card.querySelector('.img-del-btn');
+      const fileInput = card.querySelector('input[type="file"]');
+
+      if (hall?.cover_url) { applyImage(media, hall.cover_url); delBtn.style.display = ''; }
+
+      uploadBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+      fileInput.addEventListener('change', async e => {
+        const file = e.target.files[0]; if (!file) return;
+        uploadBtn.textContent = '⏳ Đang tải...';
+        const url = await uploadImage(file, `halls/${hallId}/cover`);
+        fileInput.value = '';
+        if (url && hall) {
+          hall.cover_url = url;
+          applyImage(media, url);
+          delBtn.style.display = '';
+          await saveHallToDB(hall);
+          uploadBtn.textContent = '✓ Đã lưu';
+          setTimeout(() => { uploadBtn.textContent = '📷 Thay ảnh bìa'; }, 2000);
+        }
+      });
+      delBtn.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (!confirm('Xóa ảnh bìa sảnh này?')) return;
+        hall.cover_url = null;
+        delBtn.style.display = 'none';
+        const oldImg = media.querySelector('img'); if (oldImg) oldImg.remove();
+        const ph = media.querySelector('.ph'); if (ph) ph.style.display = '';
+        await saveHallToDB(hall);
+      });
+      card.addEventListener('click', e => {
+        if (e.target.closest('.img-upload-btn') || e.target.closest('.img-del-btn') || e.target.closest('input')) return;
+        openHallDetail(hallId);
+      });
+    });
   }
 
   function renderUtils() {
@@ -662,18 +746,33 @@ body:not(.is-admin) .carousel-del{display:none!important}
 
   // ===== CAROUSEL =====
   const modal = $('#roomDetailModal');
-  let current = {id:null, type:null};
+  let current = {id:null, type:null, isHall:false};
   let carouselIdx = 0;
 
-  async function removeCarouselImage(room, confirmFirst) {
+  function getCurrentItem() {
+    if (current.isHall) return halls.find(h => h.id === current.id);
+    return roomsData[current.type]?.find(r => r.id === current.id);
+  }
+  async function saveCurrentItem(item) {
+    return current.isHall ? saveHallToDB(item) : saveRoomToDB(item, current.type);
+  }
+  function refreshCurrentCard(item) {
+    if (current.isHall) renderHalls();
+    else refreshRoomCard(item, current.type);
+  }
+  function getStoragePrefix() {
+    return current.isHall ? `halls/${current.id}` : `rooms/${current.id}`;
+  }
+
+  async function removeCarouselImage(item, confirmFirst) {
     if (confirmFirst && !confirm('Xóa ảnh này?')) return;
-    const removedUrl = room.images[carouselIdx];
-    room.images.splice(carouselIdx, 1);
-    if (carouselIdx >= room.images.length) carouselIdx = Math.max(0, room.images.length - 1);
-    await saveRoomToDB(room, current.type);
+    const removedUrl = item.images[carouselIdx];
+    item.images.splice(carouselIdx, 1);
+    if (carouselIdx >= item.images.length) carouselIdx = Math.max(0, item.images.length - 1);
+    await saveCurrentItem(item);
     if (removedUrl) deleteImageFile(removedUrl);
-    renderModalCarousel(room);
-    refreshRoomCard(room, current.type);
+    renderModalCarousel(item);
+    refreshCurrentCard(item);
   }
 
   function renderModalCarousel(room) {
@@ -752,14 +851,14 @@ body:not(.is-admin) .carousel-del{display:none!important}
           const file = e.target.files[0];
           if (!file) return;
           addBtn.textContent = '⏳ Đang tải...';
-          const url = await uploadImage(file, `rooms/${room.id}`);
+          const url = await uploadImage(file, getStoragePrefix());
           if (url) {
             if (!room.images) room.images = [];
             room.images.push(url);
             carouselIdx = room.images.length - 1;
-            await saveRoomToDB(room, current.type);
+            await saveCurrentItem(room);
             renderModalCarousel(room);
-            refreshRoomCard(room, current.type);
+            refreshCurrentCard(room);
           } else {
             addBtn.textContent = '+ Thêm ảnh';
           }
@@ -790,15 +889,30 @@ body:not(.is-admin) .carousel-del{display:none!important}
   }
 
   function openRoomDetail(roomId, type) {
-    current = {id:roomId, type};
+    current = {id:roomId, type, isHall:false};
     carouselIdx = 0;
     const room = roomsData[type].find(r => r.id === roomId);
     if (!room) return;
     $('#modalRoomName').value = room.name || '';
     $('#modalRoomCode').value = room.roomCode || `P${roomId}`;
+    $('#modalRoomCode').style.display = '';
     $('#modalPrice').value = room.price || '';
     $('#modalDescription').value = room.description || '';
     renderModalCarousel(room);
+    modal.classList.add('active');
+  }
+
+  function openHallDetail(hallId) {
+    current = {id:hallId, type:null, isHall:true};
+    carouselIdx = 0;
+    const hall = halls.find(h => h.id === hallId);
+    if (!hall) return;
+    $('#modalRoomName').value = hall.name || '';
+    $('#modalRoomCode').value = '';
+    $('#modalRoomCode').style.display = 'none';
+    $('#modalPrice').value = hall.price || '';
+    $('#modalDescription').value = hall.description || '';
+    renderModalCarousel(hall);
     modal.classList.add('active');
   }
 
@@ -807,18 +921,18 @@ body:not(.is-admin) .carousel-del{display:none!important}
 
   $('.modal-save-btn').addEventListener('click', async () => {
     if (!current.id) return;
-    const room = roomsData[current.type]?.find(r => r.id === current.id);
-    if (!room) return;
-    room.name = $('#modalRoomName').value || room.name;
-    room.roomCode = $('#modalRoomCode').value;
-    room.price = $('#modalPrice').value;
-    room.description = $('#modalDescription').value;
+    const item = getCurrentItem();
+    if (!item) return;
+    item.name = $('#modalRoomName').value || item.name;
+    item.price = $('#modalPrice').value;
+    item.description = $('#modalDescription').value;
+    if (!current.isHall) item.roomCode = $('#modalRoomCode').value;
     const btn = $('.modal-save-btn');
     btn.textContent = '⏳ Đang lưu...';
-    const ok = await saveRoomToDB(room, current.type);
+    const ok = await saveCurrentItem(item);
     if (ok) {
       btn.textContent = '✓ Đã lưu!';
-      refreshRoomCard(room, current.type);
+      refreshCurrentCard(item);
       setTimeout(() => { btn.textContent = '💾 Lưu'; modal.classList.remove('active'); }, 1000);
     } else {
       btn.textContent = '💾 Lưu';
@@ -861,9 +975,43 @@ body:not(.is-admin) .carousel-del{display:none!important}
           saveBtn.textContent = '✓ Đã lưu!';
           refreshRoomCard(room, type);
           setTimeout(() => { saveBtn.textContent = 'Lưu'; }, 2000);
-        } else {
-          saveBtn.textContent = 'Lưu';
-        }
+        } else { saveBtn.textContent = 'Lưu'; }
+      });
+    });
+
+    // Halls section in admin
+    const hallsSection = document.createElement('div');
+    hallsSection.className = 'room-type-section';
+    hallsSection.innerHTML = `
+      <div class="room-type-title">Sảnh &amp; Tiệc</div>
+      <div class="room-list">
+        ${halls.map(h => `
+          <div class="edit-hall-card" data-hall-id="${h.id}">
+            <div class="edit-room-name">${h.name}</div>
+            ${h.cover_url ? `<img src="${h.cover_url}" class="image-preview" alt="${h.name}">` : ''}
+            <div class="edit-field"><label>Tên sảnh</label><input type="text" class="f-name" value="${h.name}"></div>
+            <div class="edit-field"><label>Giá</label><input type="text" class="f-price" value="${h.price}"></div>
+            <button class="btn-gold save-btn">Lưu</button>
+          </div>
+        `).join('')}
+      </div>`;
+    $('#adminContent').appendChild(hallsSection);
+
+    hallsSection.querySelectorAll('.edit-hall-card').forEach(card => {
+      card.querySelector('.save-btn').addEventListener('click', async () => {
+        const id = +card.dataset.hallId;
+        const hall = halls.find(h => h.id === id);
+        if (!hall) return;
+        hall.name = card.querySelector('.f-name').value;
+        hall.price = card.querySelector('.f-price').value;
+        const saveBtn = card.querySelector('.save-btn');
+        saveBtn.textContent = '⏳ Đang lưu...';
+        const ok = await saveHallToDB(hall);
+        if (ok) {
+          saveBtn.textContent = '✓ Đã lưu!';
+          renderHalls();
+          setTimeout(() => { saveBtn.textContent = 'Lưu'; }, 2000);
+        } else { saveBtn.textContent = 'Lưu'; }
       });
     });
   }
@@ -942,7 +1090,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     const { data: { session } } = await sb.auth.getSession();
     currentUser = session?.user || null;
     setAdminMode(!!currentUser);
-    await Promise.all([loadRoomsFromDB(), loadHeroImage()]);
+    await Promise.all([loadRoomsFromDB(), loadHallsFromDB(), loadHeroImage()]);
     renderRoomTypeCards();
     renderHalls();
     renderUtils();
