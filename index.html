@@ -756,8 +756,22 @@ body:not(.is-admin) .carousel-del{display:none!important}
   async function saveCurrentItem(item) {
     return current.isHall ? saveHallToDB(item) : saveRoomToDB(item, current.type);
   }
+  function refreshHallCard(hall) {
+    const card = document.querySelector(`#hallGrid .svc[data-hall-id="${hall.id}"]`);
+    if (!card) return;
+    const titleEl = card.querySelector('.title');
+    const prEl = card.querySelector('.pr');
+    if (titleEl) titleEl.textContent = hall.name;
+    if (prEl) prEl.textContent = hall.price;
+    if (hall.cover_url) {
+      applyImage(card.querySelector('.media'), hall.cover_url);
+      const delBtn = card.querySelector('.img-del-btn');
+      if (delBtn) delBtn.style.display = '';
+    }
+  }
+
   function refreshCurrentCard(item) {
-    if (current.isHall) renderHalls();
+    if (current.isHall) refreshHallCard(item);
     else refreshRoomCard(item, current.type);
   }
   function getStoragePrefix() {
@@ -1009,7 +1023,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
         const ok = await saveHallToDB(hall);
         if (ok) {
           saveBtn.textContent = '✓ Đã lưu!';
-          renderHalls();
+          refreshHallCard(hall);
           setTimeout(() => { saveBtn.textContent = 'Lưu'; }, 2000);
         } else { saveBtn.textContent = 'Lưu'; }
       });
