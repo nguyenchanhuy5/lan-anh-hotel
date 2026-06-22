@@ -109,7 +109,7 @@ footer h3{font-size:30px;font-weight:600}
 footer p{color:var(--ink-soft);font-size:14px;margin-top:8px}
 footer .info{display:flex;justify-content:center;gap:30px;margin-top:18px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft)}
 footer .info b{color:var(--ink)}
-.overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px)}
+.overlay{display:none;position:fixed;inset:0;z-index:2200;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(6px)}
 .overlay.active{display:flex}
 /* ===== ROOM DETAIL MODAL ===== */
 .modal-content{position:relative;background:var(--white);border-radius:24px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4)}
@@ -152,7 +152,7 @@ footer .info b{color:var(--ink)}
 .btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(168,134,26,.3)}
 .modal-save-btn{margin-top:16px}
 /* Admin panel */
-.admin-toggle{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(168,134,26,.4);z-index:100;transition:.3s}
+.admin-toggle{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(168,134,26,.4);z-index:2100;transition:.3s}
 .admin-toggle:hover{transform:scale(1.1)}
 .admin-panel{background:var(--white);border-radius:20px;width:90%;max-width:900px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .admin-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,var(--gold-soft),var(--cream-2))}
@@ -197,12 +197,51 @@ body:not(.is-admin) .carousel-del{display:none!important}
 .lb-next{right:16px}
 .lb-counter{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.65);font-size:13px;font-weight:600;letter-spacing:1px}
 .carousel-slide{cursor:zoom-in}
+/* ===== PRICE GATE (màn bảng giá mở đầu) ===== */
+.price-gate{position:fixed;inset:0;z-index:2000;background:var(--cream);background-image:radial-gradient(circle at 12% 8%,rgba(201,162,39,.08),transparent 45%),radial-gradient(circle at 88% 92%,rgba(201,162,39,.07),transparent 45%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 18px;overflow-y:auto;transition:opacity .45s ease,visibility .45s ease}
+.price-gate.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.price-gate-inner{width:100%;max-width:1040px;margin:auto;display:flex;flex-direction:column;align-items:center;gap:18px}
+.pg-kicker{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-deep);text-align:center}
+.price-gate-imgwrap{width:100%;border-radius:18px;overflow:hidden;box-shadow:var(--shadow);background:var(--white);border:1px solid var(--line)}
+.price-gate-imgwrap.has-img{cursor:zoom-in}
+.price-gate-imgwrap img{width:100%;height:auto;display:block}
+.pg-empty{aspect-ratio:3/2;display:grid;place-items:center;text-align:center;color:var(--gold-deep);background:repeating-linear-gradient(45deg,var(--cream-2),var(--cream-2) 20px,#f0e6cf 20px,#f0e6cf 40px)}
+.pg-empty-ic{font-size:44px;margin-bottom:8px}
+.pg-empty-tx{font-size:13px;color:var(--ink-soft);background:rgba(253,250,243,.92);padding:8px 14px;border-radius:10px;display:inline-block}
+.pg-hint{display:none;font-size:12px;color:var(--ink-soft)}
+.price-gate-imgwrap.has-img ~ .pg-hint{display:block}
+.pg-enter-btn{background:linear-gradient(135deg,var(--gold),var(--gold-deep));color:var(--white);border:none;padding:15px 42px;border-radius:50px;font-weight:600;font-size:16px;cursor:pointer;box-shadow:0 12px 26px -10px rgba(168,134,26,.7);transition:.3s;font-family:inherit}
+.pg-enter-btn:hover{transform:translateY(-2px);box-shadow:0 16px 32px -10px rgba(168,134,26,.8)}
+.pg-admin{display:none;margin-top:4px}
+body.is-admin .pg-admin{display:block;text-align:center}
+.pg-upload-btn{background:var(--white);color:var(--gold-deep);border:1px solid var(--gold);padding:10px 22px;border-radius:50px;font-weight:600;font-size:13px;cursor:pointer;transition:.3s;font-family:inherit}
+.pg-upload-btn:hover{background:var(--cream-2)}
+nav a.nav-price{color:var(--gold-deep)}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
 .reveal.in{opacity:1;transform:none}
 @media(max-width:1024px){.hero h1{font-size:44px}}
 </style>
 </head>
 <body>
+<div id="priceGate" class="price-gate">
+  <div class="price-gate-inner">
+    <div class="pg-kicker">Kính chào quý khách</div>
+    <div class="price-gate-imgwrap" id="priceGateImgWrap">
+      <div class="pg-empty">
+        <div>
+          <div class="pg-empty-ic">📋</div>
+          <div class="pg-empty-tx">Bảng giá đang được cập nhật</div>
+        </div>
+      </div>
+    </div>
+    <div class="pg-hint">👆 Chạm vào ảnh để phóng to xem rõ</div>
+    <button class="pg-enter-btn" id="enterSiteBtn">Xem phòng &amp; Đặt phòng →</button>
+    <div class="pg-admin">
+      <button type="button" class="pg-upload-btn" id="priceUploadBtn">📷 Thay ảnh bảng giá</button>
+      <input type="file" id="priceImgUpload" accept="image/*" hidden>
+    </div>
+  </div>
+</div>
 <button class="admin-toggle" title="Quản trị">⚙️</button>
 
 <div class="overlay" id="loginModal">
@@ -238,6 +277,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
     </div>
   </div>
   <nav>
+    <a href="#" id="reopenPriceBtn" class="nav-price">Bảng giá</a>
     <a href="#phong" class="active">Phòng nghỉ</a>
     <a href="#sanh">Sảnh &amp; Tiệc</a>
     <a href="#tienich">Tiện ích</a>
@@ -337,6 +377,7 @@ body:not(.is-admin) .carousel-del{display:none!important}
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   let currentUser = null;
   let isUploading = false;
+  let priceBoardUrl = null;
   console.log('%cLAN ANH HOTEL', 'color:#c9a227;font-weight:700', '· build 2026-06-04 · unique-upload + guard');
 
   const roomTypes = {
@@ -1052,6 +1093,66 @@ body:not(.is-admin) .carousel-del{display:none!important}
     }
   });
 
+  // ===== PRICE GATE (màn bảng giá mở đầu) =====
+  const priceGate = $('#priceGate');
+  document.body.style.overflow = 'hidden'; // khoá cuộn khi màn bảng giá đang hiện
+
+  function applyPriceImage(url) {
+    priceBoardUrl = url;
+    const wrap = $('#priceGateImgWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Bảng giá phòng Lan Anh Hotel';
+    img.decoding = 'async';
+    wrap.appendChild(img);
+    wrap.classList.add('has-img');
+  }
+
+  async function loadPriceBoard() {
+    const { data } = await sb.from('settings').select('value').eq('key', 'price_board_url').maybeSingle();
+    if (data?.value) applyPriceImage(data.value);
+  }
+
+  async function savePriceBoardUrl(url) {
+    await sb.from('settings').upsert({ key: 'price_board_url', value: url });
+  }
+
+  function showPriceGate() {
+    priceGate.classList.remove('is-hidden');
+    document.body.style.overflow = 'hidden';
+    priceGate.scrollTop = 0;
+  }
+  function hidePriceGate() {
+    priceGate.classList.add('is-hidden');
+    document.body.style.overflow = '';
+  }
+
+  $('#enterSiteBtn').addEventListener('click', hidePriceGate);
+  $('#reopenPriceBtn').addEventListener('click', e => { e.preventDefault(); showPriceGate(); });
+  $('#priceGateImgWrap').addEventListener('click', () => { if (priceBoardUrl) openLightbox([priceBoardUrl], 0); });
+
+  $('#priceUploadBtn').addEventListener('click', () => $('#priceImgUpload').click());
+  $('#priceImgUpload').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const btn = $('#priceUploadBtn');
+    btn.textContent = '⏳ Đang tải...';
+    const oldUrl = priceBoardUrl;
+    const url = await uploadImage(file, 'priceboard');
+    e.target.value = '';
+    if (url) {
+      applyPriceImage(url);
+      await savePriceBoardUrl(url);
+      if (oldUrl && oldUrl !== url) deleteImageFile(oldUrl);
+      btn.textContent = '✓ Đã cập nhật!';
+      setTimeout(() => { btn.textContent = '📷 Thay ảnh bảng giá'; }, 2000);
+    } else {
+      btn.textContent = '📷 Thay ảnh bảng giá';
+    }
+  });
+
   // ===== LIGHTBOX =====
   let lbImages = [], lbIdx = 0;
 
@@ -1104,7 +1205,8 @@ body:not(.is-admin) .carousel-del{display:none!important}
     const { data: { session } } = await sb.auth.getSession();
     currentUser = session?.user || null;
     setAdminMode(!!currentUser);
-    await Promise.all([loadRoomsFromDB(), loadHallsFromDB(), loadHeroImage()]);
+    await Promise.all([loadRoomsFromDB(), loadHallsFromDB(), loadHeroImage(), loadPriceBoard()]);
+    if (priceBoardUrl || currentUser) showPriceGate(); else hidePriceGate();
     renderRoomTypeCards();
     renderHalls();
     renderUtils();
