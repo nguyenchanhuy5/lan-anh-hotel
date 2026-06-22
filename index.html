@@ -216,6 +216,14 @@ body.is-admin .pg-admin{display:block;text-align:center}
 .pg-upload-btn{background:var(--white);color:var(--gold-deep);border:1px solid var(--gold);padding:9px 22px;border-radius:50px;font-weight:600;font-size:13px;cursor:pointer;transition:.3s;font-family:inherit}
 .pg-upload-btn:hover{background:var(--cream-2)}
 nav a.nav-price{color:var(--gold-deep)}
+/* Cafe menu card (tiện ích → bảng giá ăn uống) */
+.util-menu{position:relative}
+.util-menu.has-menu{cursor:pointer}
+.menu-cta{display:none;margin-top:12px;font-size:13px;font-weight:600;color:var(--gold-deep)}
+.menu-admin{display:none;margin-top:12px}
+body.is-admin .menu-admin{display:block}
+.menu-upload-btn{background:var(--white);color:var(--gold-deep);border:1px solid var(--gold);padding:8px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;transition:.3s;font-family:inherit}
+.menu-upload-btn:hover{background:var(--cream-2)}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
 .reveal.in{opacity:1;transform:none}
 @media(max-width:1024px){.hero h1{font-size:44px}}
@@ -376,6 +384,7 @@ nav a.nav-price{color:var(--gold-deep)}
   let currentUser = null;
   let isUploading = false;
   let priceBoardUrl = null;
+  let menuBoardUrl = null;
   console.log('%cLAN ANH HOTEL', 'color:#c9a227;font-weight:700', '· build 2026-06-04 · unique-upload + guard');
 
   const roomTypes = {
@@ -394,7 +403,7 @@ nav a.nav-price{color:var(--gold-deep)}
   const utils = [
     {icon:'🌐', title:'WiFi Tốc Độ Cao', desc:'Phủ sóng toàn bộ khách sạn, miễn phí'},
     {icon:'🧺', title:'Dọn Phòng Hằng Ngày', desc:'Vệ sinh & thay khăn mỗi ngày'},
-    {icon:'☕', title:'Cafe & Đồ Uống', desc:'Phục vụ tại sảnh cafe'}
+    {icon:'☕', title:'Cafe & Đồ Uống', desc:'Phục vụ tại sảnh cafe', menuBoard:true}
   ];
 
   const roomsData = {'1g':[], '2g':[], '3g':[]};
@@ -773,14 +782,67 @@ nav a.nav-price{color:var(--gold-deep)}
     });
   }
 
+  async function loadMenuBoard() {
+    const { data } = await sb.from('settings').select('value').eq('key', 'menu_board_url').maybeSingle();
+    if (data?.value) menuBoardUrl = data.value;
+  }
+
+  async function saveMenuBoardUrl(url) {
+    await sb.from('settings').upsert({ key: 'menu_board_url', value: url });
+  }
+
+  function updateMenuCardCta(card) {
+    const cta = card.querySelector('.menu-cta');
+    if (cta) cta.style.display = menuBoardUrl ? 'block' : 'none';
+    card.classList.toggle('has-menu', !!menuBoardUrl);
+  }
+
   function renderUtils() {
     $('#utilGrid').innerHTML = utils.map(u => `
-      <div class="util reveal">
+      <div class="util reveal${u.menuBoard ? ' util-menu' : ''}">
         <div class="ic">${u.icon}</div>
         <div class="title">${u.title}</div>
         <div class="desc">${u.desc}</div>
+        ${u.menuBoard ? `
+        <div class="menu-cta">📋 Xem bảng giá ăn uống →</div>
+        <div class="menu-admin">
+          <button type="button" class="menu-upload-btn">📷 Thay ảnh menu</button>
+          <input type="file" accept="image/*" hidden>
+        </div>` : ''}
       </div>
     `).join('');
+
+    const menuCard = $('#utilGrid .util-menu');
+    if (!menuCard) return;
+    updateMenuCardCta(menuCard);
+
+    const uploadBtn = menuCard.querySelector('.menu-upload-btn');
+    const fileInput = menuCard.querySelector('input[type="file"]');
+
+    menuCard.addEventListener('click', e => {
+      if (e.target.closest('.menu-upload-btn') || e.target.closest('input')) return;
+      if (menuBoardUrl) openLightbox([menuBoardUrl], 0);
+    });
+
+    uploadBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+    fileInput.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      uploadBtn.textContent = '⏳ Đang tải...';
+      const oldUrl = menuBoardUrl;
+      const url = await uploadImage(file, 'menuboard');
+      e.target.value = '';
+      if (url) {
+        menuBoardUrl = url;
+        await saveMenuBoardUrl(url);
+        if (oldUrl && oldUrl !== url) deleteImageFile(oldUrl);
+        updateMenuCardCta(menuCard);
+        uploadBtn.textContent = '✓ Đã cập nhật!';
+        setTimeout(() => { uploadBtn.textContent = '📷 Thay ảnh menu'; }, 2000);
+      } else {
+        uploadBtn.textContent = '📷 Thay ảnh menu';
+      }
+    });
   }
 
   // ===== CAROUSEL =====
@@ -1203,7 +1265,7 @@ nav a.nav-price{color:var(--gold-deep)}
     const { data: { session } } = await sb.auth.getSession();
     currentUser = session?.user || null;
     setAdminMode(!!currentUser);
-    await Promise.all([loadRoomsFromDB(), loadHallsFromDB(), loadHeroImage(), loadPriceBoard()]);
+    await Promise.all([loadRoomsFromDB(), loadHallsFromDB(), loadHeroImage(), loadPriceBoard(), loadMenuBoard()]);
     if (priceBoardUrl || currentUser) showPriceGate(); else hidePriceGate();
     renderRoomTypeCards();
     renderHalls();
